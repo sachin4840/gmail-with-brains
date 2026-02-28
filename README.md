@@ -35,65 +35,39 @@ AI-powered Gmail client that reads, summarizes, and acts on your emails.
 - **Activity Logs** — Read via Supabase client with RLS
 - **User Profile** — Managed by Supabase Auth
 
-## Setup
+## Documentation
 
-### 1. Supabase
+| Guide | Description |
+|-------|-------------|
+| [Google Auth Setup](docs/GOOGLE_AUTH_SETUP.md) | Step-by-step Google OAuth & Gmail API credentials |
+| [Deployment Guide](docs/DEPLOYMENT.md) | Free hosting on Vercel + Render + Supabase |
 
-1. Create project at [supabase.com](https://supabase.com)
-2. Go to **Authentication → Providers → Google** and enable it
-   - Add your Google OAuth Client ID and Secret
-   - Set redirect URL: `https://your-project.supabase.co/auth/v1/callback`
-3. Run `supabase/schema.sql` in the SQL Editor
-4. Copy your project URL and keys
+## Quick Start (Local Development)
 
-### 2. Google Cloud Console
+### 1. Google & Supabase Setup
+Follow [docs/GOOGLE_AUTH_SETUP.md](docs/GOOGLE_AUTH_SETUP.md) to create credentials, then configure Supabase.
 
-1. Create a project at [console.cloud.google.com](https://console.cloud.google.com)
-2. Enable the **Gmail API**
-3. Create OAuth 2.0 credentials (Web application)
-   - Authorized redirect URI: `https://your-project.supabase.co/auth/v1/callback`
-4. Add scopes: `gmail.readonly`, `gmail.send`
-5. Copy Client ID and Secret → use in both Supabase Google provider AND backend `.env`
+### 2. Database
+Run `supabase/schema.sql` in your Supabase SQL Editor.
 
 ### 3. Backend
-
 ```bash
 cd backend
-cp .env.example .env
-# Fill in all values
+cp .env.example .env    # Fill in all values (see comments in file)
 npm install
-npm run dev
+npm run dev             # Runs on http://localhost:3001
 ```
 
 ### 4. Frontend
-
 ```bash
 cd frontend
-cp .env.example .env
-# Fill in Supabase URL, anon key, API URL
+cp .env.example .env    # Fill in Supabase URL + anon key
 npm install
-npm run dev
+npm run dev             # Runs on http://localhost:5173
 ```
 
-### 5. Deploy (Cloud)
-
-**Frontend:** Deploy to Vercel/Netlify
-```bash
-cd frontend && npm run build
-# Upload dist/ folder
-```
-
-**Backend:** Deploy to Railway/Render/Fly.io
-```bash
-cd backend
-# Set environment variables on your platform
-# Deploy
-```
-
-**Environment Variables for Production:**
-- Update `FRONTEND_URL` in backend to your deployed frontend URL
-- Update `VITE_API_URL` in frontend to your deployed backend URL
-- Update Google OAuth redirect URIs
+### 5. Deploy for Free
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — uses **Vercel** (frontend) + **Render** (backend) + **Supabase** (auth/DB), all free tier.
 
 ## Features
 

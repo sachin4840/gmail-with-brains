@@ -1,6 +1,6 @@
-const OpenAI = require('openai');
+const Anthropic = require('@anthropic-ai/sdk');
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 /**
  * Summarize an email and extract actionable instructions.
@@ -19,7 +19,7 @@ Date: ${email.date}
 Body:
 ${email.body.substring(0, 4000)}
 
-Respond in JSON format:
+Respond in JSON format only, no other text:
 {
   "summary": "...",
   "actionItems": ["..."],
@@ -28,15 +28,17 @@ Respond in JSON format:
   "category": "work|personal|newsletter|notification|spam|other"
 }`;
 
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+  const message = await anthropic.messages.create({
+    model: 'claude-haiku-4-5-20250404',
+    max_tokens: 1024,
     messages: [{ role: 'user', content: prompt }],
-    response_format: { type: 'json_object' },
-    temperature: 0.3,
   });
 
-  const result = JSON.parse(completion.choices[0].message.content);
-  return result;
+  const text = message.content[0].text;
+  // Extract JSON from response
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error('Failed to parse summary response');
+  return JSON.parse(jsonMatch[0]);
 }
 
 /**
@@ -54,13 +56,13 @@ Body: ${emailContext.body.substring(0, 2000)}
 
 Provide a helpful, professional response. If the instruction is to draft a reply, write a complete reply email. If it's to summarize, provide a summary. If it's to extract info, extract it clearly.`;
 
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+  const message = await anthropic.messages.create({
+    model: 'claude-haiku-4-5-20250404',
+    max_tokens: 1024,
     messages: [{ role: 'user', content: prompt }],
-    temperature: 0.5,
   });
 
-  return completion.choices[0].message.content;
+  return message.content[0].text;
 }
 
 module.exports = { summarizeEmail, processInstruction };

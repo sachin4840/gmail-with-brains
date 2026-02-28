@@ -5,7 +5,7 @@ import { apiFetch } from '../lib/api';
 import EmailList from './EmailList';
 import EmailDetail from './EmailDetail';
 import ActivityLog from './ActivityLog';
-import { LogOut, RefreshCw, Mail, Activity, Sparkles, Unlink } from 'lucide-react';
+import { LogOut, RefreshCw, Mail, Activity, Sparkles, Unlink, Inbox } from 'lucide-react';
 
 export default function Dashboard() {
   const { user, signOut, supabaseToken } = useAuth();
@@ -167,9 +167,9 @@ export default function Dashboard() {
                 <option value={14}>Last 14 days</option>
                 <option value={30}>Last 30 days</option>
               </select>
-              <button className="btn" onClick={fetchEmails} disabled={loading}>
-                <RefreshCw size={16} className={loading ? 'spin' : ''} />
-                {loading ? 'Loading...' : `Fetch (${emails.length})`}
+              <button className="btn btn-accent" onClick={fetchEmails} disabled={loading}>
+                <Inbox size={16} className={loading ? 'spin' : ''} />
+                {loading ? 'Checking...' : 'Check New Email'}
               </button>
             </div>
             <button

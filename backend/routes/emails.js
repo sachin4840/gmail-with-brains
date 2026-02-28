@@ -8,13 +8,11 @@ const { supabaseAdmin } = require('../lib/supabase');
 /**
  * GET /api/emails
  * Fetch emails from last 3 days (default) and return with cached summaries.
- * Query params: maxResults, days
  */
 router.get('/', requireGmail, async (req, res) => {
   try {
     const { maxResults = 50, days = 3 } = req.query;
 
-    // Build Gmail query for last N days
     const dateAfter = new Date();
     dateAfter.setDate(dateAfter.getDate() - parseInt(days));
     const dateStr = dateAfter.toISOString().split('T')[0].replace(/-/g, '/');
@@ -25,7 +23,6 @@ router.get('/', requireGmail, async (req, res) => {
       query,
     });
 
-    // Check cache for existing summaries
     const emailIds = emails.map((e) => e.id);
     const { data: cached } = await supabaseAdmin
       .from('email_summaries')
@@ -44,7 +41,6 @@ router.get('/', requireGmail, async (req, res) => {
       summarized: !!cachedMap[email.id],
     }));
 
-    // Log
     await supabaseAdmin.from('activity_logs').insert({
       user_id: req.user.id,
       action: 'fetch_emails',
@@ -53,20 +49,18 @@ router.get('/', requireGmail, async (req, res) => {
 
     res.json({ emails: result, query, days: parseInt(days) });
   } catch (err) {
-    console.error('Fetch emails error:', err);
-    res.status(500).json({ error: 'Failed to fetch emails' });
+    console.error('Fetch emails error:', err.message, err.stack);
+    res.status(500).json({ error: 'Failed to fetch emails', detail: err.message });
   }
 });
 
 /**
  * POST /api/emails/:id/summarize
- * Summarize a single email and cache the result.
  */
 router.post('/:id/summarize', requireGmail, async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Check cache first
     const { data: existing } = await supabaseAdmin
       .from('email_summaries')
       .select('*')
@@ -97,14 +91,13 @@ router.post('/:id/summarize', requireGmail, async (req, res) => {
 
     res.json({ summary, cached: false });
   } catch (err) {
-    console.error('Summarize error:', err);
-    res.status(500).json({ error: 'Failed to summarize email' });
+    console.error('Summarize error:', err.message, err.stack);
+    res.status(500).json({ error: 'Failed to summarize email', detail: err.message });
   }
 });
 
 /**
  * POST /api/emails/summarize-all
- * Batch summarize emails (max 10 at a time).
  */
 router.post('/summarize-all', requireGmail, async (req, res) => {
   try {
@@ -150,8 +143,8 @@ router.post('/summarize-all', requireGmail, async (req, res) => {
 
     res.json({ results });
   } catch (err) {
-    console.error('Batch summarize error:', err);
-    res.status(500).json({ error: 'Failed to batch summarize' });
+    console.error('Batch summarize error:', err.message, err.stack);
+    res.status(500).json({ error: 'Failed to batch summarize', detail: err.message });
   }
 });
 

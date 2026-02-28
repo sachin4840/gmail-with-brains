@@ -39,8 +39,9 @@ AI-powered Gmail client that reads, summarizes, and acts on your emails.
 
 | Guide | Description |
 |-------|-------------|
+| [Deploy Checklist](DEPLOY_CHECKLIST.md) | **Start here** — everything to configure before deploying |
 | [Google Auth Setup](docs/GOOGLE_AUTH_SETUP.md) | Step-by-step Google OAuth & Gmail API credentials |
-| [Deployment Guide](docs/DEPLOYMENT.md) | Free hosting on Vercel + Render + Supabase |
+| [Deployment Guide](docs/DEPLOYMENT.md) | Detailed hosting options (Vercel, Render, Railway) |
 
 ## Quick Start (Local Development)
 
@@ -66,8 +67,17 @@ npm install
 npm run dev             # Runs on http://localhost:5173
 ```
 
-### 5. Deploy for Free
-See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — uses **Vercel** (frontend) + **Render** (backend) + **Supabase** (auth/DB), all free tier.
+### 5. Deploy (Everything Free)
+
+```bash
+# Complete DEPLOY_CHECKLIST.md first, then:
+chmod +x deploy.sh
+./deploy.sh
+```
+
+Deploys both frontend AND backend to **Vercel free tier**. Zero cost (except ~$0.01/50 summaries on OpenAI).
+
+See [DEPLOY_CHECKLIST.md](DEPLOY_CHECKLIST.md) for what to configure before running.
 
 ## Features
 

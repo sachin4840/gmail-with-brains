@@ -20,6 +20,11 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 app.use('/api/emails', emailRoutes);
 app.use('/api/actions', actionRoutes);
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Only listen when running directly (not on Vercel)
+if (process.env.VERCEL !== '1') {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+module.exports = app;

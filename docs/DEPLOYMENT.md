@@ -159,13 +159,53 @@ VITE_API_URL=https://gmail-summarizer-api.onrender.com/api
 
 ---
 
+## Alternative: Deploy Backend to Railway (Recommended)
+
+Railway gives **$5 free credits** on signup (no credit card). No cold starts — much better UX than Render free tier.
+
+1. Go to [railway.app](https://railway.app) → Sign up with GitHub
+2. Click **New Project** → **Deploy from GitHub Repo**
+3. Select `sachin4840/gmail-with-brains`
+4. Railway auto-detects the app. Configure:
+
+| Setting | Value |
+|---------|-------|
+| **Root Directory** | `backend` |
+| **Start Command** | `node server.js` |
+
+5. Go to **Variables** tab, add all env vars:
+
+```
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_KEY=your-service-role-key
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+OPENAI_API_KEY=sk-your-openai-key
+PORT=3001
+FRONTEND_URL=https://your-app.vercel.app
+```
+
+6. Go to **Settings** → **Networking** → **Generate Domain**
+7. Your backend URL: `https://gmail-with-brains-production.up.railway.app`
+8. Update `VITE_API_URL` in Vercel with this URL
+
+### Railway vs Render (Free Tier Comparison)
+
+| | Railway | Render |
+|--|---------|--------|
+| **Cost** | $5 free credits (then pay-as-you-go) | Truly free (750hrs/mo) |
+| **Cold starts** | ❌ None — always warm | ✅ Yes — 30-50s after 15min idle |
+| **Speed** | Fast | Slow on free tier |
+| **Credit card** | Not required initially | Not required |
+| **Best for** | Demo/testing (credits last ~1 month) | Long-term free hosting |
+
+---
+
 ## Alternative Free Hosts
 
-| Service | Backend | Notes |
-|---------|---------|-------|
-| **Railway** | ✅ | $5 free credits/month, no cold starts |
-| **Fly.io** | ✅ | 3 shared VMs free, needs Dockerfile |
-| **Cyclic.sh** | ✅ | Serverless, no cold starts, 100K requests/mo |
-| **Vercel Serverless** | ✅ | Convert Express routes to API routes |
-
-For frontend, **Vercel**, **Netlify**, or **Cloudflare Pages** are all free and excellent.
+| Service | Type | Notes |
+|---------|------|-------|
+| **Fly.io** | Backend | 3 shared VMs free, needs Dockerfile |
+| **Cyclic.sh** | Backend | Serverless, no cold starts, 100K requests/mo |
+| **Netlify** | Frontend | Alternative to Vercel, similar features |
+| **Cloudflare Pages** | Frontend | Unlimited bandwidth, very fast |

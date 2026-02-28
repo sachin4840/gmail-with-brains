@@ -1,0 +1,17 @@
+{
+  "name": "gmail-with-brains",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI-powered Gmail client — read, summarize, and act on emails",
+  "scripts": {
+    "supabase:start": "npx supabase start",
+    "supabase:stop": "npx supabase stop",
+    "supabase:migrate": "npx supabase db push",
+    "supabase:reset": "npx supabase db reset",
+    "supabase:status": "npx supabase status",
+    "supabase:gen-types": "npx supabase gen types typescript --local > frontend/src/lib/database.types.ts"
+  },
+  "devDependencies": {
+    "supabase": "^2.0.0"
+  }
+}

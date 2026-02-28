@@ -1,28 +1,50 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../lib/api';
 import EmailList from './EmailList';
 import EmailDetail from './EmailDetail';
 import ActivityLog from './ActivityLog';
-import { LogOut, RefreshCw, Mail, Activity } from 'lucide-react';
+import { LogOut, RefreshCw, Mail, Activity, Sparkles, Unlink } from 'lucide-react';
 
 export default function Dashboard() {
-  const { user, signOut, supabaseToken, googleToken } = useAuth();
+  const { user, signOut, supabaseToken } = useAuth();
+  const navigate = useNavigate();
+  const [gmailStatus, setGmailStatus] = useState(null);
   const [emails, setEmails] = useState([]);
   const [selectedEmail, setSelectedEmail] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [view, setView] = useState('emails'); // 'emails' | 'activity'
-  const [query, setQuery] = useState('is:inbox');
+  const [view, setView] = useState('emails');
+  const [days, setDays] = useState(3);
+  const [summarizing, setSummarizing] = useState(false);
+
+  // Check Gmail connection on mount
+  useEffect(() => {
+    checkGmailAndFetch();
+  }, [supabaseToken]);
+
+  const checkGmailAndFetch = async () => {
+    if (!supabaseToken) return;
+    try {
+      const status = await apiFetch('/gmail/status', { supabaseToken });
+      setGmailStatus(status);
+      if (!status.connected) {
+        navigate('/connect');
+        return;
+      }
+      // Auto-fetch emails
+      fetchEmails();
+    } catch (err) {
+      navigate('/connect');
+    }
+  };
 
   const fetchEmails = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiFetch(`/emails?maxResults=20&query=${encodeURIComponent(query)}`, {
-        supabaseToken,
-        googleToken,
-      });
+      const data = await apiFetch(`/emails?days=${days}`, { supabaseToken });
       setEmails(data.emails);
     } catch (err) {
       setError(err.message);
@@ -31,18 +53,11 @@ export default function Dashboard() {
     }
   };
 
-  useEffect(() => {
-    if (supabaseToken && googleToken) {
-      fetchEmails();
-    }
-  }, [supabaseToken, googleToken]);
-
   const handleSummarize = async (emailId) => {
     try {
       const data = await apiFetch(`/emails/${emailId}/summarize`, {
         method: 'POST',
         supabaseToken,
-        googleToken,
       });
 
       setEmails((prev) =>
@@ -63,13 +78,12 @@ export default function Dashboard() {
     const unsummarized = emails.filter((e) => !e.summarized).map((e) => e.id);
     if (!unsummarized.length) return;
 
-    setLoading(true);
+    setSummarizing(true);
     try {
       const data = await apiFetch('/emails/summarize-all', {
         method: 'POST',
         body: { emailIds: unsummarized },
         supabaseToken,
-        googleToken,
       });
 
       const summaryMap = {};
@@ -85,27 +99,35 @@ export default function Dashboard() {
     } catch (err) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      setSummarizing(false);
     }
   };
 
-  if (!googleToken) {
-    return (
-      <div className="no-token">
-        <p>Google access token expired. Please sign out and sign in again.</p>
-        <button className="btn" onClick={signOut}>Sign Out & Re-authenticate</button>
-      </div>
-    );
-  }
+  const handleDisconnect = async () => {
+    if (!confirm('Disconnect Gmail? You can reconnect anytime.')) return;
+    try {
+      await apiFetch('/gmail/disconnect', { method: 'POST', supabaseToken });
+      navigate('/connect');
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const unsummarizedCount = emails.filter((e) => !e.summarized).length;
 
   return (
     <div className="dashboard">
       <header className="dashboard-header">
         <div className="header-left">
           <Mail size={24} />
-          <h1>Gmail Summarizer</h1>
+          <h1>Gmail with Brains</h1>
         </div>
         <div className="header-right">
+          {gmailStatus?.connected && (
+            <span className="gmail-badge">
+              📧 {gmailStatus.email}
+            </span>
+          )}
           <span className="user-email">{user?.email}</span>
           <button
             className={`btn btn-icon ${view === 'emails' ? 'active' : ''}`}
@@ -121,6 +143,9 @@ export default function Dashboard() {
           >
             <Activity size={18} />
           </button>
+          <button className="btn btn-icon" onClick={handleDisconnect} title="Disconnect Gmail">
+            <Unlink size={18} />
+          </button>
           <button className="btn btn-icon" onClick={signOut} title="Sign Out">
             <LogOut size={18} />
           </button>
@@ -135,20 +160,25 @@ export default function Dashboard() {
         <div className="email-container">
           <div className="email-toolbar">
             <div className="search-bar">
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && fetchEmails()}
-                placeholder="Gmail search query..."
-              />
+              <select value={days} onChange={(e) => setDays(e.target.value)} className="days-select">
+                <option value={1}>Last 1 day</option>
+                <option value={3}>Last 3 days</option>
+                <option value={7}>Last 7 days</option>
+                <option value={14}>Last 14 days</option>
+                <option value={30}>Last 30 days</option>
+              </select>
               <button className="btn" onClick={fetchEmails} disabled={loading}>
                 <RefreshCw size={16} className={loading ? 'spin' : ''} />
-                {loading ? 'Loading...' : 'Fetch'}
+                {loading ? 'Loading...' : `Fetch (${emails.length})`}
               </button>
             </div>
-            <button className="btn btn-primary" onClick={handleSummarizeAll} disabled={loading}>
-              Summarize All
+            <button
+              className="btn btn-primary"
+              onClick={handleSummarizeAll}
+              disabled={summarizing || !unsummarizedCount}
+            >
+              <Sparkles size={16} />
+              {summarizing ? 'Summarizing...' : `Summarize All (${unsummarizedCount})`}
             </button>
           </div>
 
@@ -163,7 +193,6 @@ export default function Dashboard() {
               email={selectedEmail}
               onSummarize={handleSummarize}
               supabaseToken={supabaseToken}
-              googleToken={googleToken}
             />
           </div>
         </div>

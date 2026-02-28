@@ -3,16 +3,13 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 /**
  * Make an authenticated API call to the backend.
  */
-export async function apiFetch(path, { method = 'GET', body, supabaseToken, googleToken } = {}) {
+export async function apiFetch(path, { method = 'GET', body, supabaseToken } = {}) {
   const headers = {
     'Content-Type': 'application/json',
   };
 
   if (supabaseToken) {
     headers['Authorization'] = `Bearer ${supabaseToken}`;
-  }
-  if (googleToken) {
-    headers['X-Google-Token'] = googleToken;
   }
 
   const res = await fetch(`${API_URL}${path}`, {

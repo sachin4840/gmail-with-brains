@@ -1,18 +1,24 @@
 const express = require('express');
 const router = express.Router();
-const { requireAuth } = require('../middleware/auth');
+const { requireGmail } = require('../middleware/auth');
 const { fetchEmails, fetchEmailById } = require('../lib/gmail');
 const { summarizeEmail } = require('../lib/summarizer');
 const { supabaseAdmin } = require('../lib/supabase');
 
 /**
  * GET /api/emails
- * Fetch recent emails and summarize them.
- * Query params: maxResults, query
+ * Fetch emails from last 3 days (default) and return with cached summaries.
+ * Query params: maxResults, days
  */
-router.get('/', requireAuth, async (req, res) => {
+router.get('/', requireGmail, async (req, res) => {
   try {
-    const { maxResults = 20, query = 'is:inbox' } = req.query;
+    const { maxResults = 50, days = 3 } = req.query;
+
+    // Build Gmail query for last N days
+    const dateAfter = new Date();
+    dateAfter.setDate(dateAfter.getDate() - parseInt(days));
+    const dateStr = dateAfter.toISOString().split('T')[0].replace(/-/g, '/');
+    const query = `after:${dateStr}`;
 
     const emails = await fetchEmails(req.googleAccessToken, {
       maxResults: parseInt(maxResults),
@@ -32,21 +38,20 @@ router.get('/', requireAuth, async (req, res) => {
       cachedMap[c.email_id] = c;
     });
 
-    // Attach cached summaries or mark as unsummarized
     const result = emails.map((email) => ({
       ...email,
       summary: cachedMap[email.id]?.summary_data || null,
       summarized: !!cachedMap[email.id],
     }));
 
-    // Log the fetch
+    // Log
     await supabaseAdmin.from('activity_logs').insert({
       user_id: req.user.id,
       action: 'fetch_emails',
-      details: { count: emails.length, query },
+      details: { count: emails.length, days: parseInt(days), query },
     });
 
-    res.json({ emails: result });
+    res.json({ emails: result, query, days: parseInt(days) });
   } catch (err) {
     console.error('Fetch emails error:', err);
     res.status(500).json({ error: 'Failed to fetch emails' });
@@ -57,7 +62,7 @@ router.get('/', requireAuth, async (req, res) => {
  * POST /api/emails/:id/summarize
  * Summarize a single email and cache the result.
  */
-router.post('/:id/summarize', requireAuth, async (req, res) => {
+router.post('/:id/summarize', requireGmail, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -73,11 +78,9 @@ router.post('/:id/summarize', requireAuth, async (req, res) => {
       return res.json({ summary: existing.summary_data, cached: true });
     }
 
-    // Fetch and summarize
     const email = await fetchEmailById(req.googleAccessToken, id);
     const summary = await summarizeEmail(email);
 
-    // Cache the summary
     await supabaseAdmin.from('email_summaries').insert({
       user_id: req.user.id,
       email_id: id,
@@ -86,7 +89,6 @@ router.post('/:id/summarize', requireAuth, async (req, res) => {
       summary_data: summary,
     });
 
-    // Log
     await supabaseAdmin.from('activity_logs').insert({
       user_id: req.user.id,
       action: 'summarize_email',
@@ -102,9 +104,9 @@ router.post('/:id/summarize', requireAuth, async (req, res) => {
 
 /**
  * POST /api/emails/summarize-all
- * Summarize all provided email IDs (batch).
+ * Batch summarize emails (max 10 at a time).
  */
-router.post('/summarize-all', requireAuth, async (req, res) => {
+router.post('/summarize-all', requireGmail, async (req, res) => {
   try {
     const { emailIds } = req.body;
     if (!emailIds || !emailIds.length) {
@@ -114,7 +116,6 @@ router.post('/summarize-all', requireAuth, async (req, res) => {
     const results = [];
 
     for (const id of emailIds.slice(0, 10)) {
-      // Check cache
       const { data: existing } = await supabaseAdmin
         .from('email_summaries')
         .select('*')

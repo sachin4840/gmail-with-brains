@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const emailRoutes = require('./routes/emails');
 const actionRoutes = require('./routes/actions');
+const gmailAuthRoutes = require('./routes/gmail-auth');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -13,14 +14,12 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
-// Routes
 app.use('/api/emails', emailRoutes);
 app.use('/api/actions', actionRoutes);
+app.use('/api/gmail', gmailAuthRoutes);
 
-// Only listen when running directly (not on Vercel)
 if (process.env.VERCEL !== '1') {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

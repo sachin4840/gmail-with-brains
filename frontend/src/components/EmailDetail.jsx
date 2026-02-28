@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { apiFetch } from '../lib/api';
 import { Sparkles, Send, Zap, Copy, Check } from 'lucide-react';
 
-export default function EmailDetail({ email, onSummarize, supabaseToken, googleToken }) {
+export default function EmailDetail({ email, onSummarize, supabaseToken }) {
   const [instruction, setInstruction] = useState('');
   const [actionResult, setActionResult] = useState(null);
   const [replyDraft, setReplyDraft] = useState('');
@@ -26,7 +26,7 @@ export default function EmailDetail({ email, onSummarize, supabaseToken, googleT
         method: 'POST',
         body: { emailId: email.id, instruction },
         supabaseToken,
-        googleToken,
+        
       });
       setActionResult(data.result);
     } catch (err) {
@@ -44,7 +44,7 @@ export default function EmailDetail({ email, onSummarize, supabaseToken, googleT
         method: 'POST',
         body: { emailId: email.id, replyBody: replyDraft },
         supabaseToken,
-        googleToken,
+        
       });
       setReplyDraft('');
       alert('Reply sent!');

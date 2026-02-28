@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { requireAuth } = require('../middleware/auth');
+const { requireGmail } = require('../middleware/auth');
 const { fetchEmailById, sendReply } = require('../lib/gmail');
 const { processInstruction } = require('../lib/summarizer');
 const { supabaseAdmin } = require('../lib/supabase');
@@ -9,7 +9,7 @@ const { supabaseAdmin } = require('../lib/supabase');
  * POST /api/actions/execute
  * Execute an instruction on an email (draft reply, extract info, etc.)
  */
-router.post('/execute', requireAuth, async (req, res) => {
+router.post('/execute', requireGmail, async (req, res) => {
   try {
     const { emailId, instruction } = req.body;
 
@@ -38,7 +38,7 @@ router.post('/execute', requireAuth, async (req, res) => {
  * POST /api/actions/reply
  * Send a reply to an email via Gmail.
  */
-router.post('/reply', requireAuth, async (req, res) => {
+router.post('/reply', requireGmail, async (req, res) => {
   try {
     const { emailId, replyBody } = req.body;
 

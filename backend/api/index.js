@@ -17,13 +17,17 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Lazy-load routes to catch import errors
+// Routes
 try {
   const emailRoutes = require('../routes/emails');
   const actionRoutes = require('../routes/actions');
+  const gmailAuthRoutes = require('../routes/gmail-auth');
+
   app.use('/api/emails', emailRoutes);
   app.use('/api/actions', actionRoutes);
+  app.use('/api/gmail', gmailAuthRoutes);
 } catch (err) {
+  console.error('Route loading error:', err);
   app.use('/api/*', (req, res) => {
     res.status(500).json({ error: 'Route loading failed', message: err.message });
   });
